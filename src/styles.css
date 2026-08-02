@@ -1,0 +1,260 @@
+/**
+ * 미니앱 공통 베이스. 신규 앱은 이 파일에서 시작한다.
+ * 여기 든 규칙은 전부 실제 반려·버그에서 나온 것이라 지우지 말 것.
+ * (근거: C:\dev\.claude\RETENTION_RUBRIC.md)
+ */
+:root {
+  --primary: #2F9E44;
+  --primary-deep: #237733;
+  --primary-soft: #e6f4ea;
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --line: #e6eaf0;
+  --text: #17191d;
+  --sub: #6b7280;
+  --dim: #9aa1ac;
+  --danger: #e5484d;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); }
+body {
+  font-family: 'Pretendard', -apple-system, 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+  word-break: keep-all;
+  -webkit-font-smoothing: antialiased;
+  font-variant-numeric: tabular-nums;
+}
+button { font-family: inherit; border: none; background: none; cursor: pointer; color: inherit; }
+ul, ol { list-style: none; }
+
+/* min-height가 있어야 배너(sticky)가 짧은 화면에서도 하단까지 밀려난다 */
+.app {
+  max-width: 480px; margin: 0 auto; min-height: 100dvh;
+  padding: 24px 20px 40px;
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+.hdr-title { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; }
+.hdr-sub { font-size: 14px; color: var(--sub); margin-top: 4px; line-height: 1.5; }
+
+.panel {
+  background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  padding: 18px; display: flex; flex-direction: column; gap: 12px;
+}
+.panel-title { font-size: 15px; font-weight: 700; }
+
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 340px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* ── 입력 ───────────────────────────────────────────── */
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field-label { font-size: 13px; font-weight: 700; color: var(--sub); }
+.field-wrap { position: relative; display: flex; align-items: center; }
+.field-input {
+  border: 1.5px solid var(--line); border-radius: 12px;
+  padding: 12px 14px; font-size: 16px; font-family: inherit;
+  background: #fff; color: var(--text); outline: none;
+  width: 100%; min-height: 48px;
+  /* 그리드·플렉스 칸 안에서 내용 폭보다 작게 줄어들 수 있어야 한다.
+     없으면 자식이 내재 폭을 고집해 칸 밖으로 밀려난다. */
+  min-width: 0;
+}
+.field-input:focus { border-color: var(--primary); }
+
+/**
+ * 날짜 입력 — iOS WebView는 네이티브 컨트롤로 그려 width:100%를 무시하고
+ * 내용 크기로 잡는다. 데스크톱 크롬에서는 재현되지 않지만 실제 토스 앱의
+ * 2열 grid에서 오른쪽으로 넘친다. 실측 재발 2회. 지우지 말 것.
+ */
+.field-input[type='date'] {
+  -webkit-appearance: none; appearance: none;
+  min-width: 0; max-width: 100%;
+  padding-left: 12px; padding-right: 10px;
+}
+.field-input::-webkit-calendar-picker-indicator {
+  opacity: 0.5; margin: 0; padding: 0; flex-shrink: 0;
+}
+/* 2열이 유지되는 좁은 폭에서는 아이콘을 접어 값이 온전히 보이게 한다 */
+@media (max-width: 400px) {
+  .field-input[type='date'] { font-size: 15px; padding-left: 10px; padding-right: 6px; }
+  .field-input[type='date']::-webkit-calendar-picker-indicator { display: none; }
+}
+.suffix {
+  position: absolute; right: 14px; font-size: 14px; font-weight: 600;
+  color: var(--sub); pointer-events: none;
+}
+.field-wrap .field-input { padding-right: 52px; }
+
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  min-height: 44px; padding: 0 14px; border-radius: 999px;
+  border: 1.5px solid var(--line); font-size: 13px; font-weight: 700;
+  color: var(--sub); background: #fff;
+}
+.chip.on { border-color: var(--primary); background: var(--primary-soft); color: var(--primary-deep); }
+
+.btn-primary {
+  min-height: 50px; border-radius: 14px; background: var(--primary); color: #fff;
+  font-size: 15px; font-weight: 800;
+}
+.btn-primary:active { opacity: 0.85; }
+.btn-ghost {
+  min-height: 46px; border-radius: 12px; border: 1.5px solid var(--line);
+  font-size: 14px; font-weight: 700; color: var(--sub); background: #fff;
+}
+
+/* ── 결과 ───────────────────────────────────────────── */
+.result {
+  background: var(--primary); border-radius: 16px; padding: 18px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.result-title { font-size: 13px; font-weight: 700; color: rgba(255, 255, 255, 0.78); }
+.result-big { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.02em; }
+.result-rows {
+  display: flex; flex-direction: column; gap: 5px;
+  border-top: 1px solid rgba(255, 255, 255, 0.25); padding-top: 10px;
+}
+.result-row { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; color: rgba(255, 255, 255, 0.86); }
+.result-row span:last-child { font-weight: 700; color: #fff; text-align: right; }
+
+/* ── 목록 ── 스크롤을 유발해 배너 노출이 3배 높다. 결과 1장짜리보다 낫다. */
+.list { display: flex; flex-direction: column; gap: 8px; }
+.row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 14px;
+  padding: 14px; min-height: 60px; width: 100%; text-align: left;
+}
+.row-name { font-size: 15px; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row-meta { font-size: 13px; color: var(--sub); flex-shrink: 0; }
+.badge {
+  font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+  background: var(--primary-soft); color: var(--primary-deep); white-space: nowrap;
+}
+
+.empty { font-size: 14px; color: var(--sub); text-align: center; padding: 28px 12px; line-height: 1.6; }
+.note { font-size: 13px; color: var(--sub); line-height: 1.6; }
+.disclaimer { font-size: 12px; color: var(--dim); line-height: 1.6; }
+
+/**
+ * 하단 배너 — sticky는 요소를 붙잡아 둘 뿐 밀어내지 못한다.
+ * 콘텐츠가 한 화면보다 짧으면 배너가 화면 중간에 남는다(실측 56px 뜸).
+ * margin-top:auto가 .app의 남은 공간을 먹어 바닥까지 민다.
+ * 좌우 -20px / 아래 -40px은 .app 패딩 상쇄용 — 없으면 스크롤 끝에서 위에 멈춘다.
+ * 조상에 overflow-x:hidden이 있으면 sticky가 죽으니 넣지 말 것.
+ */
+.ad-banner {
+  position: sticky; bottom: 0; z-index: 20;
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  margin: auto -20px -40px;
+  padding: 6px 20px calc(6px + env(safe-area-inset-bottom, 0px));
+  background: var(--bg); border-top: 1px solid var(--line);
+}
+.ad-banner-label { font-size: 11px; color: var(--dim); }
+
+/* ---------- 푸시 동의 유도 배너 ---------- */
+.push-optin {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 14px; border-radius: 14px;
+  background: var(--primary-soft); border: 1px solid var(--line);
+}
+.push-optin-text { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.push-optin-title { font-size: 14px; font-weight: 700; color: var(--primary-deep); }
+.push-optin-desc { font-size: 12px; color: var(--sub); line-height: 1.45; }
+.push-optin-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.push-optin-btn {
+  min-height: 36px; padding: 0 14px; border-radius: 10px;
+  background: var(--primary); color: #fff; font-size: 13px; font-weight: 700;
+}
+.push-optin-close {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  color: var(--sub); border-radius: 8px;
+}
+
+/* ---------- 리워드 보너스 (핵심 기능 잠금 금지, 추가 가치에만) ---------- */
+.bonus-cta {
+  min-height: 48px; border-radius: 14px; width: 100%;
+  border: 1.5px dashed var(--primary); color: var(--primary-deep);
+  background: transparent; font-size: 14px; font-weight: 700;
+}
+.bonus-cta:disabled { opacity: 0.5; }
+
+/* ---------- 슬라이더 ---------- */
+.slider {
+  -webkit-appearance: none; appearance: none; width: 100%;
+  height: 4px; border-radius: 999px; background: var(--primary-soft); outline: none;
+}
+.slider::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; width: 24px; height: 24px; border-radius: 50%;
+  background: var(--primary); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.22);
+}
+.slider::-moz-range-thumb {
+  width: 22px; height: 22px; border-radius: 50%; background: var(--primary); border: 3px solid #fff;
+}
+
+/* ---------- 히어로 (가장 가까운 기한) ---------- */
+.hero {
+  background: var(--primary); border-radius: 16px; padding: 18px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.hero-cap { font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, 0.75); }
+.hero-title { font-size: 17px; font-weight: 800; color: #fff; }
+.hero-dday { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -0.02em; }
+.hero-meta { font-size: 12px; color: rgba(255, 255, 255, 0.82); margin-top: 2px; }
+
+/* ---------- 일정 카드 ---------- */
+.evt {
+  border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+  display: flex; flex-direction: column; gap: 5px; background: #fff;
+}
+.evt.open { border-color: var(--primary); }
+.evt-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.evt-title { font-size: 15px; font-weight: 700; min-width: 0; }
+.badge.urgent { background: #fdecee; color: var(--danger); }
+.evt-date { font-size: 12px; color: var(--sub); font-weight: 600; }
+.evt-open { color: var(--primary-deep); margin-left: 6px; }
+.evt-what { font-size: 13px; color: var(--text); line-height: 1.55; }
+.evt-penalty { font-size: 12px; color: var(--danger); line-height: 1.5; }
+.evt-agency { font-size: 11px; color: var(--dim); }
+
+/* ---------- 달력 ---------- */
+.cal-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.cal-title { font-size: 16px; font-weight: 800; }
+.cal-nav {
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  border-radius: 10px; color: var(--sub); border: 1px solid var(--line);
+}
+.cal-nav svg { width: 18px; height: 18px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-wd { font-size: 11px; font-weight: 700; color: var(--dim); text-align: center; padding-bottom: 4px; }
+.cal-day {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  aspect-ratio: 1; border-radius: 10px; min-width: 0;
+}
+.cal-day b { font-size: 13px; font-weight: 600; }
+.cal-day em { font-style: normal; font-size: 9px; color: var(--dim); }
+.cal-day.sonless { background: var(--primary-soft); }
+.cal-day.sonless b { color: var(--primary-deep); font-weight: 800; }
+.cal-day.sonless em { color: var(--primary-deep); opacity: 0.7; }
+.cal-day.today { box-shadow: inset 0 0 0 2px var(--primary); }
+.badge.warnb { background: #fff4e6; color: #d9480f; }
+
+.hero.over { background: var(--danger); }
+.progress { display: flex; flex-direction: column; gap: 6px; }
+.progress-bar { height: 10px; border-radius: 999px; background: var(--primary-soft); overflow: hidden; }
+.progress-fill { display: block; height: 100%; border-radius: 999px; background: var(--primary); }
+.progress-fill.over { background: var(--danger); }
+.progress-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--sub); font-weight: 600; }
+.del {
+  width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+  color: var(--dim); border-radius: 8px; flex-shrink: 0;
+}
+.del svg { width: 15px; height: 15px; }
+.btn-primary:disabled { opacity: 0.45; }
+
+.hero.late { background: var(--danger); }
+.hero.tight { background: #e8590c; }
+.row.on { border-color: var(--primary); background: var(--primary-soft); }
+.row.danger { border-color: var(--danger); }
+.badge.lv-쉬움 { background: #e6f4ea; color: #237733; }
+.badge.lv-보통 { background: #fff4e6; color: #b35309; }
+.badge.lv-어려움 { background: #fdecee; color: #c92a2a; }
