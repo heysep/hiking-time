@@ -6,7 +6,7 @@ export default defineConfig({
   brand: {
     displayName: '등산 소요시간 계산기',
     primaryColor: '#2F9E44',
-    icon: '',
+    icon: 'https://static.toss.im/appsintoss/61245/a5480dd3-2024-4cf1-9d55-a76d290c1235.png',
   },
   web: { host: 'localhost', port: 5173, commands: { dev: 'vite', build: 'vite build' } },
   permissions: [],
