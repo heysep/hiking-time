@@ -1,0 +1,63 @@
+name: 날씨 예보 갱신
+
+# 기상청 단기예보는 하루 8회(02·05·08·11·14·17·20·23시) 발표되고
+# 발표 10분 뒤부터 조회된다. 발표 20분 뒤에 받는다.
+#
+# 앱에 인증키를 넣지 않으려고 여기서 미리 받아 정적 JSON으로 커밋한다.
+# 계정당 키가 하나라 번들에 넣으면 다른 API(국세청 사업자등록 진위확인 등)까지 노출된다.
+on:
+  schedule:
+    - cron: '20 17,20,23,2,5,8,11,14 * * *' # KST 02:20, 05:20, ... (UTC 기준)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-weather
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 수집
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+          TZ: Asia/Seoul
+        run: node scripts/fetch-weather.mjs
+
+      # 신선도는 커밋 로그가 아니라 파일 안의 값으로 판단한다.
+      # 스크립트가 "성공"했는데 내용이 비거나 옛날 것일 수 있다.
+      - name: 산출물 검증
+        env:
+          TZ: Asia/Seoul
+        run: |
+          node -e "
+            const d = require('./src/data/weather.json');
+            const names = Object.keys(d.regions ?? {});
+            if (names.length < 10) { console.error('지역 부족: ' + names.length); process.exit(1); }
+            const empty = names.filter(n => (d.regions[n].slots ?? []).length === 0);
+            if (empty.length) { console.error('예보 비어있음: ' + empty.join(',')); process.exit(1); }
+            const age = (Date.now() - new Date(d.asOf).getTime()) / 3600000;
+            if (!(age < 1)) { console.error('asOf가 오래됨: ' + d.asOf); process.exit(1); }
+            console.log('OK  지역 ' + names.length + '개, 기준 ' + d.baseDate + ' ' + d.baseTime);
+          "
+
+      - name: 커밋
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/weather.json
+          if git diff --cached --quiet; then
+            echo "변경 없음"
+          else
+            git commit -m "chore: 날씨 예보 갱신"
+            git push
+          fi

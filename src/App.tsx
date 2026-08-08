@@ -5,6 +5,9 @@ import { canShowRewarded, showRewarded } from './ads/rewarded';
 import { COURSES } from './core/courses';
 import { PACES, fmtDuration, groupByMountain, plan, shortNote } from './core/plan';
 import { fmtClock } from './core/sun';
+import { WeatherCard } from './components/WeatherCard';
+import weatherData from './data/weather.json';
+import type { WeatherData } from './core/weather';
 
 const KEY = 'hikingtime.last.v1';
 
@@ -90,7 +93,7 @@ export function App() {
   return (
     <div className="app">
       <header>
-        <h1 className="hdr-title">등산 소요시간 계산기</h1>
+        <h1 className="hdr-title">등산 소요시간</h1>
         <p className="hdr-sub">
           코스와 출발 시각을 고르면 하산 완료 시각과 일몰까지 남는 여유를 알려드려요.
         </p>
@@ -115,6 +118,13 @@ export function App() {
           </span>
         </section>
       )}
+
+      <WeatherCard
+        data={weatherData as WeatherData}
+        region={course.region}
+        gainM={course.gain}
+        now={today}
+      />
 
       <section className="panel">
         <div className="field">

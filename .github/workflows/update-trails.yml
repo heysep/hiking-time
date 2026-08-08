@@ -1,0 +1,54 @@
+name: 등산로 데이터 갱신
+
+# 등산로·산 정보는 거의 바뀌지 않아 주 1회면 충분하다.
+# 매일 돌릴 이유가 없고, 공공 API 쿼터만 태운다.
+on:
+  schedule:
+    - cron: '0 18 * * 0' # 매주 월요일 03:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 수집
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: node scripts/fetch-trails.mjs
+
+      # 신선도 검증 — 커밋 로그가 아니라 파일 안의 asOf로 판단한다.
+      # 스크립트가 "성공"했는데 출력 경로가 어긋나 영원히 no changes로 끝난
+      # 사고가 다른 레포에서 실제로 있었다. 성공 = 갱신이 아니다.
+      - name: 산출물 검증
+        run: |
+          test -f src/data/mountains.json || { echo "산출물 없음"; exit 1; }
+          node -e "
+            const d = require('./src/data/mountains.json');
+            const today = new Date().toISOString().slice(0,10);
+            if (d.asOf !== today) { console.error('asOf가 오늘이 아님: ' + d.asOf); process.exit(1); }
+            if (!Array.isArray(d.mountains) || d.mountains.length === 0) { console.error('산 0건'); process.exit(1); }
+            const withCoords = d.mountains.filter(m => Number.isFinite(m.lat) && Number.isFinite(m.lng)).length;
+            if (withCoords === 0) { console.error('좌표 있는 산 0건'); process.exit(1); }
+            console.log('OK  산 ' + d.mountains.length + '개, 좌표 ' + withCoords + '개, asOf ' + d.asOf);
+          "
+
+      - name: 커밋
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add src/data/mountains.json
+          if git diff --cached --quiet; then
+            echo "변경 없음 — 데이터가 그대로입니다"
+          else
+            git commit -m "chore: 등산로 데이터 갱신"
+            git push
+          fi
