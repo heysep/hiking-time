@@ -6,6 +6,7 @@ import { COURSES } from './core/courses';
 import { PACES, fmtDuration, groupByMountain, plan, shortNote } from './core/plan';
 import { fmtClock } from './core/sun';
 import { WeatherCard } from './components/WeatherCard';
+import { MountainInfo } from './components/MountainInfo';
 import weatherData from './data/weather.json';
 import type { WeatherData } from './core/weather';
 
@@ -243,6 +244,8 @@ export function App() {
           )}
         </section>
       )}
+
+      <MountainInfo mountain={course.mountain} />
 
       {course.note && (
         <section className="panel">

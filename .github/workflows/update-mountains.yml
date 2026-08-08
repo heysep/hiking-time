@@ -1,4 +1,4 @@
-name: 등산로 데이터 갱신
+name: 산 소개 갱신
 
 # 등산로·산 정보는 거의 바뀌지 않아 주 1회면 충분하다.
 # 매일 돌릴 이유가 없고, 공공 API 쿼터만 태운다.
@@ -23,7 +23,7 @@ jobs:
       - name: 수집
         env:
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
-        run: node scripts/fetch-trails.mjs
+        run: node scripts/fetch-mountains.mjs
 
       # 신선도 검증 — 커밋 로그가 아니라 파일 안의 asOf로 판단한다.
       # 스크립트가 "성공"했는데 출력 경로가 어긋나 영원히 no changes로 끝난
@@ -33,12 +33,11 @@ jobs:
           test -f src/data/mountains.json || { echo "산출물 없음"; exit 1; }
           node -e "
             const d = require('./src/data/mountains.json');
-            const today = new Date().toISOString().slice(0,10);
-            if (d.asOf !== today) { console.error('asOf가 오늘이 아님: ' + d.asOf); process.exit(1); }
-            if (!Array.isArray(d.mountains) || d.mountains.length === 0) { console.error('산 0건'); process.exit(1); }
-            const withCoords = d.mountains.filter(m => Number.isFinite(m.lat) && Number.isFinite(m.lng)).length;
-            if (withCoords === 0) { console.error('좌표 있는 산 0건'); process.exit(1); }
-            console.log('OK  산 ' + d.mountains.length + '개, 좌표 ' + withCoords + '개, asOf ' + d.asOf);
+            const names = Object.keys(d.mountains ?? {});
+            if (names.length < 10) { console.error('산 부족: ' + names.length); process.exit(1); }
+            const stub = names.filter(n => (d.mountains[n].details ?? '').length < 40);
+            if (stub.length) { console.error('껍데기 소개글: ' + stub.join(',')); process.exit(1); }
+            console.log('OK  산 ' + names.length + '개, asOf ' + d.asOf);
           "
 
       - name: 커밋
